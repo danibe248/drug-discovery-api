@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.60"
     }
   }
 }
@@ -24,4 +24,14 @@ module "app_bucket" {
     ManagedBy = "terraform"
     Project   = var.project_name
   }
+}
+
+module "dev_lambda" {
+  source = "../../modules/lambda"
+
+  project_name  = var.project_name
+  environment   = var.environment
+  source_dir    = "${path.module}/lambda_src"
+  runtime       = "python3.14"
+  handler       = "get_file.handler"
 }
