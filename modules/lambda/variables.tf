@@ -36,3 +36,13 @@ variable "memory_size" {
   type        = number
   default     = 128
 }
+
+variable "s3_bucket_name" {
+  description = "S3 Bucket name"
+  type        = string
+}
+
+variable "iam_role_arn" {
+  description = "IAM Role ARN"
+  type        = string
+}
