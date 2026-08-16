@@ -7,6 +7,15 @@ on:
       - prod
     paths:
       - '**/*.tf'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
 
 permissions:
   id-token: write   # required for OIDC auth to AWS
@@ -19,14 +28,15 @@ env:
   AWS_ROLE: ${{ secrets.AWS_CICD_ROLE }}
   TF_VAR_region: ${{ secrets.AWS_CICD_REGION }}
   TF_VAR_project_name: ${{ vars.PROJECT_NAME }}
-  TF_VAR_environment: ${{ github.ref_name }}
-  TF_WORKING_DIR: environment/${{ github.ref_name }}
+  # falls back to ref_name on push, uses the chosen input on manual dispatch
+  TF_VAR_environment: ${{ github.event.inputs.environment || github.ref_name }}
+  TF_WORKING_DIR: environment/${{ github.event.inputs.environment || github.ref_name }}
 
 jobs:
   terraform:
     name: Terraform
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name }}
+    environment: ${{ github.event.inputs.environment || github.ref_name }}
     defaults:
       run:
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -70,5 +80,5 @@ jobs:
 
       - name: Terraform Apply
         id: apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         run: terraform apply -auto-approve tfplan
