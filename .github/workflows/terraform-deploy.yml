@@ -30,7 +30,7 @@ env:
   TF_VAR_project_name: ${{ vars.PROJECT_NAME }}
   # falls back to ref_name on push, uses the chosen input on manual dispatch
   TF_VAR_environment: ${{ github.event.inputs.environment || github.ref_name }}
-  TF_WORKING_DIR: environment/${{ github.event.inputs.environment || github.ref_name }}
+  TF_WORKING_DIR: environments/${{ github.event.inputs.environment || github.ref_name }}
 
 jobs:
   terraform:
