@@ -3,7 +3,7 @@ resource "aws_s3_bucket" "this" {
 
   tags = merge(
     {
-      Name        = var.bucket_name
+      Name        = "${var.project_name}-${lower(var.environment)}-staging"
       Environment = var.environment
     },
     var.tags

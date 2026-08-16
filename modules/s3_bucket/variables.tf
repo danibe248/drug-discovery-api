@@ -1,5 +1,5 @@
-variable "bucket_name" {
-  description = "Globally unique S3 bucket name"
+variable "project_name" {
+  description = "Name of project"
   type        = string
 }
 
