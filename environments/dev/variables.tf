@@ -8,7 +8,7 @@ variable "project_name" {
   type        = string
 }
 
-variable "bucket_name" {
-  description = "Globally unique name for the dev S3 bucket"
+variable "environment" {
+  description = "Current nvironment"
   type        = string
 }

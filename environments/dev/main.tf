@@ -16,8 +16,8 @@ provider "aws" {
 module "app_bucket" {
   source = "../../modules/s3_bucket"
 
-  bucket_name       = var.bucket_name
-  environment       = "dev"
+  project_name      = var.project_name
+  environment       = var.environment
   enable_versioning = true
 
   tags = {
