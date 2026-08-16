@@ -17,7 +17,9 @@ env:
   TF_VERSION: "1.15.8"
   AWS_REGION: ${{ secrets.AWS_CICD_REGION }}
   AWS_ROLE: ${{ secrets.AWS_CICD_ROLE }}
-  # Adjust if your terraform files live in a subdirectory
+  TF_VAR_region: ${{ secrets.AWS_CICD_REGION }}
+  TF_VAR_project_name: ${{ var.PROJECT_NAME }}
+  TF_VAR_environment: ${{ github.ref_name }}
   TF_WORKING_DIR: ./environment/${{ github.ref_name }}
 
 jobs:
