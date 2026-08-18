@@ -121,3 +121,23 @@ resource "aws_iam_role_policy" "dynamodb_write" {
   })
 }
 
+resource "aws_iam_role_policy" "process_csv_lambda_s3" {
+  name = "${var.project_name}-S3-copy"
+  role = aws_iam_role.ingest_lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["s3:GetObject", "s3:DeleteObject"]
+        Effect   = "Allow"
+        Resource = "${var.s3_bucket_arn}/uploads/*"
+      },
+      {
+        Action   = ["s3:PutObject"]
+        Effect   = "Allow"
+        Resource = "${var.s3_bucket_arn}/processed/*"
+      }
+    ]
+  })
+}

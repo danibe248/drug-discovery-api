@@ -3,6 +3,8 @@ import io
 import os
 import urllib.parse
 import uuid
+import hashlib
+
 from decimal import Decimal
 
 import boto3
@@ -87,6 +89,12 @@ def validate_columns(fieldnames):
             f"Missing required columns: {missing}"
         )
 
+def make_id(drug_name, target):
+    value = f"{drug_name}:{target}"
+
+    return hashlib.sha256(
+        value.encode("utf-8")
+    ).hexdigest()
 
 def validate_and_transform(row, source_file):
     drug_name = row["drug_name"].strip()
@@ -111,7 +119,7 @@ def validate_and_transform(row, source_file):
         )
 
     return {
-        "id": str(uuid.uuid4()),
+        "id": make_id(drug_name, target),
         "drug_name": drug_name,
         "target": target,
         "efficacy": Decimal(str(efficacy)),
