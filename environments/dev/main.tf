@@ -29,19 +29,21 @@ module "app_bucket" {
 module "dev_lambda" {
   source = "../../modules/lambda"
 
-  project_name   = var.project_name
-  environment    = var.environment
-  source_dir     = "${path.module}/lambda_src"
-  runtime        = "python3.14"
-  handler        = "get_file.handler"
-  iam_role_arn   = module.iam.lambda_role_arn
-  s3_bucket_name = module.app_bucket.bucket_id
+  project_name          = var.project_name
+  environment           = var.environment
+  runtime               = "python3.14"
+  get_file_iam_role_arn = module.iam.get_file_lambda_role_arn
+  ingest_iam_role_arn   = module.iam.ingest_lambda_role_arn
+  s3_bucket_name        = module.app_bucket.bucket_id
+  s3_bucket_arn         = module.app_bucket.bucket_arn
+  dynamodb_table        = module.dynamodb.table_name
 }
 
 module "iam" {
-  source        = "../../modules/iam"
-  project_name  = var.project_name
-  s3_bucket_arn = module.app_bucket.bucket_arn # Direct reference to S3 output
+  source             = "../../modules/iam"
+  project_name       = var.project_name
+  s3_bucket_arn      = module.app_bucket.bucket_arn 
+  dynamodb_table_arn = module.dynamodb.table_arn
 }
 
 module "apigateway" {
@@ -50,6 +52,13 @@ module "apigateway" {
   environment          = var.environment
   lambda_function_name = module.dev_lambda.function_name
   lambda_invoke_arn    = module.dev_lambda.invoke_arn  # Must use invoke_arn for REST API integrations
+}
+
+module "dynamodb" {
+  source = "../../modules/dynamodb"
+
+  project_name         = var.project_name
+  environment          = var.environment
 }
 
 output "upload_endpoint" {
