@@ -8,11 +8,6 @@ variable "project_name" {
   type        = string
 }
 
-variable "source_dir" {
-  description = "Path to the directory containing Python source files"
-  type        = string
-}
-
 variable "handler" {
   description = "Function entrypoint in format <filename>.<method>"
   type        = string
@@ -42,7 +37,22 @@ variable "s3_bucket_name" {
   type        = string
 }
 
-variable "iam_role_arn" {
+variable "s3_bucket_arn" {
+  description = "S3 Bucket ARN"
+  type        = string
+}
+
+variable "get_file_iam_role_arn" {
   description = "IAM Role ARN"
+  type        = string
+}
+
+variable "ingest_iam_role_arn" {
+  description = "IAM Role ARN"
+  type        = string
+}
+
+variable "dynamodb_table" {
+  description = "DynamoDB table name"
   type        = string
 }
