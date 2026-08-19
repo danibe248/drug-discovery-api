@@ -42,7 +42,7 @@ variable "s3_bucket_arn" {
   type        = string
 }
 
-variable "get_file_iam_role_arn" {
+variable "upload_iam_role_arn" {
   description = "IAM Role ARN"
   type        = string
 }
@@ -52,7 +52,22 @@ variable "ingest_iam_role_arn" {
   type        = string
 }
 
+variable "get_drugs_iam_role_arn" {
+  description = "IAM Role ARN"
+  type        = string
+}
+
+variable "get_job_status_iam_role_arn" {
+  description = "IAM Role ARN"
+  type        = string
+}
+
 variable "dynamodb_table" {
   description = "DynamoDB table name"
+  type        = string
+}
+
+variable "log_table" {
+  description = "DynamoDB log table name"
   type        = string
 }

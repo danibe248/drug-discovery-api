@@ -8,12 +8,32 @@ variable "environment" {
   type        = string
 }
 
-variable "lambda_function_name" {
+variable "upload_function_name" {
   description = "Name of the Lambda function to trigger"
   type        = string
 }
 
-variable "lambda_invoke_arn" {
+variable "upload_invoke_arn" {
+  description = "Invocation ARN of the Lambda function"
+  type        = string
+}
+
+variable "get_drugs_function_name" {
+  description = "Name of the Lambda function to trigger"
+  type        = string
+}
+
+variable "get_drugs_invoke_arn" {
+  description = "Invocation ARN of the Lambda function"
+  type        = string
+}
+
+variable "get_job_status_function_name" {
+  description = "Name of the Lambda function to trigger"
+  type        = string
+}
+
+variable "get_job_status_invoke_arn" {
   description = "Invocation ARN of the Lambda function"
   type        = string
 }
