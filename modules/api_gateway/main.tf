@@ -1,6 +1,6 @@
 # REST API Gateway (v1)
 resource "aws_api_gateway_rest_api" "rest_api" {
-  name        = "${var.project_name}-endpoints"
+  name        = "${var.project_name}-${var.environment}endpoints"
   description = "REST API for CSV file uploads"
 }
 

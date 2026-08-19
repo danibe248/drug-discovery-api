@@ -13,8 +13,8 @@ import boto3
 s3 = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
 
-table = dynamodb.Table(os.environ["TABLE_NAME"])
-logs_table = dynamodb.Table(os.environ["LOGS_TABLE_NAME"])
+table = dynamodb.Table(os.environ["DRUGS_TABLE_NAME"])
+logs_table = dynamodb.Table(os.environ["LOG_TABLE"])
 
 
 REQUIRED_COLUMNS = {
