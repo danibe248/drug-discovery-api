@@ -14,6 +14,7 @@ s3 = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
 
 table = dynamodb.Table(os.environ["TABLE_NAME"])
+logs_table = dynamodb.Table(os.environ["LOGS_TABLE_NAME"])
 
 
 REQUIRED_COLUMNS = {
@@ -23,19 +24,55 @@ REQUIRED_COLUMNS = {
 }
 
 
+class ProcessingError(Exception):
+    """Raised for any validation/processing failure that should be logged
+    with a specific, known status code."""
+
+    def __init__(self, status, message):
+        self.status = status
+        self.message = message
+        super().__init__(message)
+
+
 def handler(event, context):
     for record in event["Records"]:
         bucket = record["s3"]["bucket"]["name"]
         key = urllib.parse.unquote_plus(
             record["s3"]["object"]["key"]
         )
+        filename = key.rsplit("/", 1)[-1]
 
-        process_file(bucket, key)
+        try:
+            row_count = process_file(bucket, key)
+        except ProcessingError as e:
+            log_result(filename, e.status, e.message)
+        except Exception as e:
+            log_result(
+                filename,
+                "ERROR__UNKNOWN",
+                f"Unexpected error while processing file: {e}",
+            )
+        else:
+            log_result(
+                filename,
+                "PROCESSED",
+                f"Successfully processed {row_count} row(s).",
+            )
 
     return {
         "statusCode": 200,
         "message": "CSV processed successfully",
     }
+
+
+def log_result(filename, status, comment):
+    logs_table.put_item(
+        Item={
+            "id": filename,
+            "status": status,
+            "comment": comment,
+        }
+    )
 
 
 def process_file(bucket, key):
@@ -60,6 +97,8 @@ def process_file(bucket, key):
 
     move_to_processed(bucket, key)
 
+    return len(items)
+
 
 def move_to_processed(bucket, key):
     # Preserve the filename but relocate it under a "processed/" prefix.
@@ -80,13 +119,14 @@ def move_to_processed(bucket, key):
 
 def validate_columns(fieldnames):
     if not fieldnames:
-        raise ValueError("CSV has no header")
+        raise ProcessingError("ERROR__MISSING_HEADER", "CSV has no header")
 
     missing = REQUIRED_COLUMNS - set(fieldnames)
 
     if missing:
-        raise ValueError(
-            f"Missing required columns: {missing}"
+        raise ProcessingError(
+            "ERROR__MISSING_COLUMNS",
+            f"Missing required columns: {sorted(missing)}",
         )
 
 def make_id(drug_name, target):
@@ -101,21 +141,25 @@ def validate_and_transform(row, source_file):
     target = row["target"].strip()
 
     if not drug_name:
-        raise ValueError("drug_name cannot be empty")
+        raise ProcessingError(
+            "ERROR__EMPTY_DRUG_NAME", "drug_name cannot be empty"
+        )
 
     if not target:
-        raise ValueError("target cannot be empty")
+        raise ProcessingError("ERROR__EMPTY_TARGET", "target cannot be empty")
 
     try:
         efficacy = float(row["efficacy"])
     except (TypeError, ValueError):
-        raise ValueError(
-            f"Invalid efficacy: {row['efficacy']}"
+        raise ProcessingError(
+            "ERROR__INVALID_EFFICACY",
+            f"Invalid efficacy: {row['efficacy']!r} is not a number",
         )
 
     if not 0 <= efficacy <= 1:
-        raise ValueError(
-            f"Efficacy must be between 0 and 1: {efficacy}"
+        raise ProcessingError(
+            "ERROR__INVALID_EFFICACY_RANGE",
+            f"Efficacy must be between 0 and 1: {efficacy}",
         )
 
     return {

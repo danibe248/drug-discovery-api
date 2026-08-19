@@ -8,16 +8,28 @@ table = dynamodb.Table(os.environ["LOGS_TABLE_NAME"])
 
 def handler(event, context):
     params = event.get("queryStringParameters") or {}
-    job_id = params.get("id")
+
+    job_id = (params.get("id") or params.get("filename") or "").strip()
 
     if not job_id:
-        return _response(400, {"message": "Missing required query parameter 'id'"})
+        return _response(
+            400, {"message": "Missing required query parameter 'id'"}
+        )
 
     try:
-        resp = table.get_item(Key={"id": job_id})
+        resp = table.get_item(Key={"id": job_id}, ConsistentRead=True)
         item = resp.get("Item")
+
         if not item:
-            return _response(404, {"message": f"No job found with id '{job_id}'"})
+            return _response(
+                202,
+                {
+                    "id": job_id,
+                    "status": "PENDING",
+                    "message": "File has not finished processing yet. Try again shortly.",
+                },
+            )
+
         return _response(200, item)
 
     except Exception as e:
