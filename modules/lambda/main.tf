@@ -55,7 +55,7 @@ resource "aws_lambda_function" "ingest" {
 
   environment {
     variables = {
-      TABLE_NAME = var.dynamodb_table
+      DRUGS_TABLE_NAME = var.dynamodb_table
       LOG_TABLE  = var.log_table
     }
   }
@@ -151,7 +151,7 @@ resource "aws_lambda_function" "get_job_status" {
 
   environment {
     variables = {
-      LOGS_TABLE_NAME = var.log_table
+      LOG_TABLE = var.log_table
     }
   }
 
