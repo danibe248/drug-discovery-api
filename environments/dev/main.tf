@@ -48,7 +48,7 @@ module "iam" {
   environment        = var.environment
   s3_bucket_arn      = module.app_bucket.bucket_arn 
   dynamodb_table_arn = module.dynamodb.table_arn
-  logs_table_arn     = module.dynamodb.logs_table_name
+  logs_table_arn     = module.dynamodb.logs_table_arn
 }
 
 module "apigateway" {
