@@ -1,0 +1,84 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches:
+      - dev
+      - prod
+    paths:
+      - '**/*.tf'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+
+permissions:
+  id-token: write   # required for OIDC auth to AWS
+  contents: read
+  pull-requests: write  # to comment plan output on PRs
+
+env:
+  TF_VERSION: "1.15.8"
+  AWS_REGION: ${{ secrets.AWS_CICD_REGION }}
+  AWS_ROLE: ${{ secrets.AWS_CICD_ROLE }}
+  TF_VAR_region: ${{ secrets.AWS_CICD_REGION }}
+  TF_VAR_project_name: ${{ vars.PROJECT_NAME }}
+  # falls back to ref_name on push, uses the chosen input on manual dispatch
+  TF_VAR_environment: ${{ github.event.inputs.environment || github.ref_name }}
+  TF_WORKING_DIR: environments/${{ github.event.inputs.environment || github.ref_name }}
+
+jobs:
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || github.ref_name }}
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+        continue-on-error: true
+
+      - name: Fail if Plan Failed
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        id: apply
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
