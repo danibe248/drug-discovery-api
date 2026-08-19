@@ -73,7 +73,7 @@ resource "aws_api_gateway_integration" "get_drugs" {
 resource "aws_lambda_permission" "get_drugs_apigw" {
   statement_id  = "AllowAPIGatewayInvokeGetDrugs"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.get_drugs.function_name
+  function_name = var.get_drugs_function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.rest_api.execution_arn}/*/GET/drugs"
 }
@@ -112,7 +112,7 @@ resource "aws_api_gateway_integration" "get_status" {
 resource "aws_lambda_permission" "get_status_apigw" {
   statement_id  = "AllowAPIGatewayInvokeGetStatus"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.get_job_status.function_name
+  function_name = var.get_job_status_function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.rest_api.execution_arn}/*/GET/status"
 }

@@ -8,7 +8,16 @@ variable "dynamodb_table_arn" {
   type        = string
 }
 
+variable "logs_table_arn" {
+  description = "DynamoDB table ARN"
+  type        = string
+}
+
 variable "project_name" {
   description = "Project name prefix"
   type        = string
+}
+
+variable "environment" {
+  type = string
 }

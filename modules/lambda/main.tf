@@ -1,24 +1,24 @@
 locals {
-  get_file_function_name = "${var.project_name}-get-file"
-  ingest_function_name = "${var.project_name}-ingest"
-  get_data_function_name = "${var.project_name}-get-data"
-  get_logs_function_name = "${var.project_name}-get-logs"
+  upload_function_name = "${var.project_name}-${var.environment}-get-file"
+  ingest_function_name = "${var.project_name}-${var.environment}-ingest"
+  get_data_function_name = "${var.project_name}-${var.environment}-get-data"
+  get_logs_function_name = "${var.project_name}-${var.environment}-get-logs"
 }
 
-data "archive_file" "get_file_lambda_zip" {
+data "archive_file" "upload_lambda_zip" {
   type        = "zip"
-  source_dir  = "${path.module}/src/get_file"
-  output_path = "${path.module}/builds/${local.get_file_function_name}.zip"
+  source_dir  = "${path.module}/src/upload"
+  output_path = "${path.module}/builds/${local.upload_function_name}.zip"
 }
 
 # Lambda Function
-resource "aws_lambda_function" "get_file" {
-  filename         = data.archive_file.get_file_lambda_zip.output_path
-  function_name    = local.get_file_function_name
-  role             = var.get_file_iam_role_arn
+resource "aws_lambda_function" "upload" {
+  filename         = data.archive_file.upload_lambda_zip.output_path
+  function_name    = local.upload_function_name
+  role             = var.upload_iam_role_arn
   handler          = var.handler
   runtime          = var.runtime
-  source_code_hash = data.archive_file.get_file_lambda_zip.output_base64sha256
+  source_code_hash = data.archive_file.upload_lambda_zip.output_base64sha256
 
   timeout     = var.timeout
   memory_size = var.memory_size
@@ -105,7 +105,7 @@ data "archive_file" "get_drugs" {
 
 resource "aws_lambda_function" "get_drugs" {
   function_name    = local.get_data_function_name
-  role             = aws_iam_role.get_drugs_lambda.arn
+  role             = var.get_drugs_iam_role_arn
   handler          = var.handler
   runtime          = var.runtime
   filename         = data.archive_file.get_drugs.output_path
@@ -139,7 +139,7 @@ data "archive_file" "get_job_status" {
 
 resource "aws_lambda_function" "get_job_status" {
   function_name    = local.get_logs_function_name
-  role             = aws_iam_role.get_job_status.arn
+  role             = var.get_job_status_iam_role_arn
   handler          = var.handler
   runtime          = var.runtime
   filename         = data.archive_file.get_job_status.output_path
@@ -151,7 +151,7 @@ resource "aws_lambda_function" "get_job_status" {
 
   environment {
     variables = {
-      LOGS_TABLE_NAME = aws_dynamodb_table.logs.name
+      LOGS_TABLE_NAME = var.log_table
     }
   }
 
