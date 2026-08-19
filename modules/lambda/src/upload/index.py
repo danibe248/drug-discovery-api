@@ -26,7 +26,7 @@ def handler(event, context):
                 ),
             }
 
-        file_id = uuid.uuid4()
+        file_id = str(uuid.uuid4())
 
         # Bare filename - this is the same value the processing pipeline
         # uses as the "id" in the logs table, so the client can poll on it.
@@ -45,7 +45,7 @@ def handler(event, context):
             "headers": {"Content-Type": "application/json"},
             "body": json.dumps({
                 "message": "CSV uploaded successfully",
-                "filename": filename,
+                "file_id": file_id,
                 "file_key": file_key,
             }),
         }

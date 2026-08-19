@@ -35,20 +35,25 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
 }
 
 # Inline Policy granting permission to write to S3 bucket
-resource "aws_iam_role_policy" "lambda_s3_write" {
-  name = "${local.upload_function_name}-s3-write"
-  role = aws_iam_role.upload_lambda_role.id
+data "aws_iam_policy_document" "lambda_s3_write" {
+  statement {
+    effect = "Allow"
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = ["s3:PutObject", "s3:PutObjectAcl"]
-        Effect   = "Allow"
-        Resource = "${var.s3_bucket_arn}/*"
-      }
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectAcl"
     ]
-  })
+
+    resources = [
+      "${var.s3_bucket_arn}/*"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_s3_write" {
+  name   = "${local.upload_function_name}-s3-write"
+  role   = aws_iam_role.upload_lambda_role.id
+  policy = data.aws_iam_policy_document.lambda_s3_write.json
 }
 
 # Lambda Execution Role
@@ -80,68 +85,79 @@ resource "aws_iam_role_policy_attachment" "ingest_lambda_logs" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-resource "aws_iam_role_policy" "lambda_s3_read" {
-  name = "${var.project_name}-${var.environment}-S3-read"
-  role = aws_iam_role.ingest_lambda_role.id
+data "aws_iam_policy_document" "lambda_s3_read" {
+  statement {
+    effect = "Allow"
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-
-    Statement = [
-      {
-        Effect = "Allow"
-
-        Action = [
-          "s3:GetObject"
-        ]
-
-        Resource = "${var.s3_bucket_arn}/uploads/*"
-      }
+    actions = [
+      "s3:GetObject"
     ]
-  })
+
+    resources = [
+      "${var.s3_bucket_arn}/uploads/*"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_s3_read" {
+  name   = "${var.project_name}-${var.environment}-S3-read"
+  role   = aws_iam_role.ingest_lambda_role.id
+  policy = data.aws_iam_policy_document.lambda_s3_read.json
+}
+
+data "aws_iam_policy_document" "dynamodb_write" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:PutItem",
+      "dynamodb:BatchWriteItem"
+    ]
+
+    resources = [
+      var.dynamodb_table_arn,
+      var.logs_table_arn
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "dynamodb_write" {
-  name = "${var.project_name}-${var.environment}-dynamodb-write"
-  role = aws_iam_role.ingest_lambda_role.id
+  name   = "${var.project_name}-${var.environment}-dynamodb-write"
+  role   = aws_iam_role.ingest_lambda_role.id
+  policy = data.aws_iam_policy_document.dynamodb_write.json
+}
 
-  policy = jsonencode({
-    Version = "2012-10-17"
+data "aws_iam_policy_document" "process_csv_lambda_s3" {
+  statement {
+    effect = "Allow"
 
-    Statement = [
-      {
-        Effect = "Allow"
-
-        Action = [
-          "dynamodb:PutItem",
-          "dynamodb:BatchWriteItem"
-        ]
-
-        Resource = var.dynamodb_table_arn
-      }
+    actions = [
+      "s3:GetObject",
+      "s3:DeleteObject"
     ]
-  })
+
+    resources = [
+      "${var.s3_bucket_arn}/uploads/*"
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:PutObject"
+    ]
+
+    resources = [
+      "${var.s3_bucket_arn}/processed/*"
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "process_csv_lambda_s3" {
-  name = "${var.project_name}-${var.environment}-S3-copy"
-  role = aws_iam_role.ingest_lambda_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = ["s3:GetObject", "s3:DeleteObject"]
-        Effect   = "Allow"
-        Resource = "${var.s3_bucket_arn}/uploads/*"
-      },
-      {
-        Action   = ["s3:PutObject"]
-        Effect   = "Allow"
-        Resource = "${var.s3_bucket_arn}/processed/*"
-      }
-    ]
-  })
+  name   = "${var.project_name}-${var.environment}-S3-copy"
+  role   = aws_iam_role.ingest_lambda_role.id
+  policy = data.aws_iam_policy_document.process_csv_lambda_s3.json
 }
 
 data "aws_iam_policy_document" "lambda_assume_role" {
