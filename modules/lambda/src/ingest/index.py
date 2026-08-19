@@ -40,21 +40,21 @@ def handler(event, context):
         key = urllib.parse.unquote_plus(
             record["s3"]["object"]["key"]
         )
-        filename = key.rsplit("/", 1)[-1]
+        file_id = key.rsplit("_", 1)[-1].replace(".csv","")
 
         try:
             row_count = process_file(bucket, key)
         except ProcessingError as e:
-            log_result(filename, e.status, e.message)
+            log_result(file_id, e.status, e.message)
         except Exception as e:
             log_result(
-                filename,
+                file_id,
                 "ERROR__UNKNOWN",
                 f"Unexpected error while processing file: {e}",
             )
         else:
             log_result(
-                filename,
+                file_id,
                 "PROCESSED",
                 f"Successfully processed {row_count} row(s).",
             )
@@ -65,10 +65,10 @@ def handler(event, context):
     }
 
 
-def log_result(filename, status, comment):
+def log_result(file_id, status, comment):
     logs_table.put_item(
         Item={
-            "id": filename,
+            "id": file_id,
             "status": status,
             "comment": comment,
         }
