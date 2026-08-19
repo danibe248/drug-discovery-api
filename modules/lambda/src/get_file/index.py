@@ -2,6 +2,7 @@ import base64
 import os
 import time
 import boto3
+import uuid
 
 s3_client = boto3.client("s3")
 BUCKET_NAME = os.environ.get("BUCKET_NAME")
@@ -22,7 +23,9 @@ def handler(event, context):
                 "body": '{"error": "No CSV payload provided in request body."}'
             }
 
-        file_name = f"uploads/csv_upload_{int(time.time())}.csv"
+        file_id = uuid.uuid4()
+
+        file_name = f"uploads/csv_upload_{file_id}.csv"
 
         s3_client.put_object(
             Bucket=BUCKET_NAME,

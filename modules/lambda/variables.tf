@@ -56,3 +56,8 @@ variable "dynamodb_table" {
   description = "DynamoDB table name"
   type        = string
 }
+
+variable "log_table" {
+  description = "DynamoDB log table name"
+  type        = string
+}

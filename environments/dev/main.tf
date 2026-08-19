@@ -37,6 +37,7 @@ module "dev_lambda" {
   s3_bucket_name        = module.app_bucket.bucket_id
   s3_bucket_arn         = module.app_bucket.bucket_arn
   dynamodb_table        = module.dynamodb.table_name
+  log_table             = module.dynamodb.logs_table_name
 }
 
 module "iam" {
@@ -50,8 +51,12 @@ module "apigateway" {
   source               = "../../modules/api_gateway"
   project_name         = var.project_name
   environment          = var.environment
-  lambda_function_name = module.dev_lambda.function_name
-  lambda_invoke_arn    = module.dev_lambda.invoke_arn  # Must use invoke_arn for REST API integrations
+  upload_function_name = module.dev_lambda.upload_function_name
+  upload_invoke_arn    = module.dev_lambda.upload_invoke_arn
+  get_drugs_function_name = module.dev_lambda.get_data_function_arn
+  get_drugs_invoke_arn    = module.dev_lambda.get_data_invoke_arn
+  get_job_status_function_name = module.dev_lambda.get_job_status_function_name
+  get_job_status_invoke_arn    = module.dev_lambda.get_job_status_invoke_arn
 }
 
 module "dynamodb" {
